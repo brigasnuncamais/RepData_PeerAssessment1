@@ -33,7 +33,7 @@ nrowHisto <- aggregate(steps ~ date, data=activity, FUN = sum,na.rm = T)
 ```
 
 ### 2. Make a histogram of the total number of steps taken each day
-```{r}
+```{r fig.width=10, fig.height=7}
 if (!require("ggplot2")) {
   install.packages("ggplot2")
 }
@@ -51,7 +51,7 @@ median(nrowHisto$steps)
 ## What is the average daily activity pattern?
 
 ### 1. Make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken 
-```{r}
+```{r fig.width=10, fig.height=7}
 if (!require("scales")) {
   install.packages("scales")
 }
@@ -64,7 +64,7 @@ ggplot(data=meansteps, aes(x=daytime, y=steps))  +
   geom_line()  + xlab("Day time")  +
   ggtitle("average daily activity pattern")  +
   ylab("average number of steps") +
-  scale_x_datetime(breaks=("2 hour"), minor_breaks=("1 hour"), labels=date_format("%H:%M"),limits=limits)
+  scale_x_datetime(breaks=("1 hour"), minor_breaks=("30 min"), labels=date_format("%H:%M"),limits=limits)
 ```
 
 ### 2. Which 5-minute interval, contains the maximum number of steps? 
@@ -93,7 +93,7 @@ filledactivity$steps <- with(filledactivity,impute(steps, mean))
 ```
 
 ### 4. Make a histogram of the total number of steps taken each day 
-```{r}
+```{r fig.width=10, fig.height=7}
 imputedsteps <- aggregate(x=list(steps=filledactivity$steps), by=list(date=filledactivity$date), FUN = sum)
 mean(imputedsteps$steps)
 mean(nrowHisto$steps)
@@ -115,11 +115,18 @@ filledactivity$daytype <-
 ```
 
 ### 2. Make a panel plot 
-```{r}
+```{r fig.width=10, fig.height=7}
 avgfilledactivity <- aggregate(steps ~ interval + daytype, data=filledactivity, mean)
-ggplot(data=avgfilledactivity, aes(interval, steps)) + 
+minutes <- formatC(avgfilledactivity$interval/100, 2, format = "f")
+avgfilledactivity$daytime <- as.POSIXct(paste(Sys.Date(), minutes), format = "%Y-%m-%d %H.%M", tz = "CET")
+avgfilledactivity$daytime <- as.POSIXct(avgfilledactivity$daytime, format = "%H:%M:%S")
+Lower <- with(avgfilledactivity,as.POSIXct(strftime(min(daytime),"%Y-%m-%d"),tz="CET"))
+Upper <- with(avgfilledactivity,as.POSIXct(strftime(as.Date(max(daytime))+1,"%Y-%m-%d"))-300)
+Limits = c(Lower,Upper)
+ggplot(data=avgfilledactivity, aes(x=daytime, y=steps)) + 
     geom_line() + 
     facet_grid(daytype ~ .) +
     xlab("Day time") + 
-    ylab("average number of steps")
+    ylab("average number of steps") +
+  scale_x_datetime(breaks=("1 hour"), minor_breaks=("30 min"), labels=date_format("%H:%M"),limits=Limits)
 ```

@@ -92,7 +92,7 @@ ggplot(data=meansteps, aes(x=daytime, y=steps))  +
   geom_line()  + xlab("Day time")  +
   ggtitle("average daily activity pattern")  +
   ylab("average number of steps") +
-  scale_x_datetime(breaks=("2 hour"), minor_breaks=("1 hour"), labels=date_format("%H:%M"),limits=limits)
+  scale_x_datetime(breaks=("1 hour"), minor_breaks=("30 min"), labels=date_format("%H:%M"),limits=limits)
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-7-1.png) 
@@ -215,11 +215,18 @@ filledactivity$daytype <-
 
 ```r
 avgfilledactivity <- aggregate(steps ~ interval + daytype, data=filledactivity, mean)
-ggplot(data=avgfilledactivity, aes(interval, steps)) + 
+minutes <- formatC(avgfilledactivity$interval/100, 2, format = "f")
+avgfilledactivity$daytime <- as.POSIXct(paste(Sys.Date(), minutes), format = "%Y-%m-%d %H.%M", tz = "CET")
+avgfilledactivity$daytime <- as.POSIXct(avgfilledactivity$daytime, format = "%H:%M:%S")
+Lower <- with(avgfilledactivity,as.POSIXct(strftime(min(daytime),"%Y-%m-%d"),tz="CET"))
+Upper <- with(avgfilledactivity,as.POSIXct(strftime(as.Date(max(daytime))+1,"%Y-%m-%d"))-300)
+Limits = c(Lower,Upper)
+ggplot(data=avgfilledactivity, aes(x=daytime, y=steps)) + 
     geom_line() + 
     facet_grid(daytype ~ .) +
     xlab("Day time") + 
-    ylab("average number of steps")
+    ylab("average number of steps") +
+  scale_x_datetime(breaks=("1 hour"), minor_breaks=("30 min"), labels=date_format("%H:%M"),limits=Limits)
 ```
 
 ![](PA1_template_files/figure-html/unnamed-chunk-13-1.png) 
